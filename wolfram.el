@@ -57,16 +57,11 @@
 	  wolfram-alpha-app-id
 	  query))
 
-(defun wolfram--xml-for-query (query)
+(defun wolfram--async-xml-for-query (query callback)
   "Returns XML for a query"
-  (let* ((url (wolfram--url-for-query query))
-	 (data (when url (with-current-buffer (url-retrieve-synchronously url)
-			   (buffer-string)))))
-    (if data
-	(with-temp-buffer
-	  (erase-buffer)
-	  (insert data)
-	  (car (xml-parse-region (point-min) (point-max)))))))
+  (let* ((url (wolfram--url-for-query query)))
+    (when url (with-current-buffer
+		  (url-retrieve url callback)))))
 
 (defun wolfram--pods-for-query (query)
   "Runs a query, return pods as an alist."
@@ -79,7 +74,7 @@
     ;; First insert pod
     (insert
      (when title
-       (format "* %s%s\n"
+       (format "** %s%s\n"
 	       title
 	       (if err " *error*" ""))))
     ;; Then subpods
@@ -98,17 +93,29 @@
 	))
     ))
 
-(defun wolfram--create-pods-buffer (pods)
-  "Creates the buffer to show the pods."
+(defun wolfram--switch-to-wolfram-buffer ()
+  "Switches to (creates if necessary) the wolfram alpha results buffer."
   (let ((buffer (get-buffer-create wolfram-alpha-buffer-name)))
     (unless (eq (current-buffer) buffer)
-      (switch-to-buffer-other-window buffer))
+      (switch-to-buffer buffer))
     (when (functionp 'org-mode) (org-mode))
     (when (functionp 'iimage-mode) (iimage-mode))
-    (goto-char (point-max))
-    (dolist (pod pods)
-      (wolfram--append-pod pod))
     buffer))
+
+(defun wolfram--create-wolfram-buffer (query)
+  "Creates the buffer to show the pods."
+  (wolfram--switch-to-wolfram-buffer)
+  (goto-char (point-max))
+  (insert (format "* \"%s\" (searching)\n" query)))
+
+(defun wolfram--append-pods-to-buffer (buffer pods)
+  "Appends all of the pods to a specific buffer."
+  (goto-char (point-max))
+  (search-backward " (searching)")
+  (replace-match "")
+  (goto-char (point-max))
+  (dolist (pod pods)
+    (wolfram--append-pod pod)))
 
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
@@ -118,10 +125,27 @@
 	(buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
-  (if (and (stringp query)
-	   (> (length query) 0))
-      (wolfram--create-pods-buffer
-       (wolfram--pods-for-query query))))
+  
+  (wolfram--create-wolfram-buffer query)
+  (wolfram--async-xml-for-query
+   query
+   (lambda (args)
+     (print "foo")
+     (let ((pods 
+	    (xml-get-children
+	     (let ((data (buffer-string)))
+	       (with-temp-buffer
+		 (erase-buffer)
+		 (insert data)
+		 (car (xml-parse-region (point-min) (point-max)))))
+	     'pod)))
+       (let ((buffer (wolfram--switch-to-wolfram-buffer)))
+	 (wolfram--append-pods-to-buffer
+	  buffer
+	  pods))
+       )
+     ))
+  )
 
 (provide 'wolfram)
 ;;; wolfram.el ends here
