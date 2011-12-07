@@ -78,19 +78,21 @@
 	       title
 	       (if err " *error*" ""))))
     ;; Then subpods
-    (dolist (subpod (xml-get-children pod 'subpod))
-      (let ((plaintext (car (xml-get-children subpod 'plaintext)))
-	    (image (car (xml-get-children subpod 'img))))
-    	(insert
-	 (concat
-	  (when plaintext
-	    (format "%s\n"
-		    (car (last plaintext))))
-	  (when image
-	    (format "%s\n"
-		    (xml-get-attribute image 'src)))
-	  "\n"))
-	))
+    (dolist (subpod (xml-get-children pod 'subpod)) (wolfram--append-subpod subpod))))
+
+(defun wolfram--append-subpod (subpod)
+  "Appends a subpod to the current buffer."
+  (let ((plaintext (car (xml-get-children subpod 'plaintext)))
+	(image (car (xml-get-children subpod 'img))))
+    (insert
+     (concat
+      (when plaintext
+	(format "%s\n"
+		(car (last plaintext))))
+      ;; (when image
+      ;; 	(format "%s\n"
+      ;; 		(xml-get-attribute image 'src)))
+      "\n"))
     ))
 
 (defun wolfram--switch-to-wolfram-buffer ()
