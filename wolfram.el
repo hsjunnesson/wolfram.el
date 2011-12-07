@@ -40,26 +40,23 @@
   :group 'wolfram-alpha
   :type 'string)
 
-(defcustom wolfram-alpha-prefer-plaintext nil
-  "Whether to show plaintext version when there's both a plaintext and an image result."
-  :group 'wolfram-alpha
-  :type 'boolean)
-
 
 ;;; Code:
 
 (require 'url)
 (require 'xml)
+(require 'url-cache)
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
-  (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext"
+  (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15"
 	  wolfram-alpha-app-id
-	  query))
+	  (url-hexify-string query)))
 
 (defun wolfram--async-xml-for-query (query callback)
   "Returns XML for a query"
   (let* ((url (wolfram--url-for-query query)))
+    (print url)
     (when url (with-current-buffer
 		  (url-retrieve url callback)))))
 
@@ -80,20 +77,22 @@
     ;; Then subpods
     (dolist (subpod (xml-get-children pod 'subpod)) (wolfram--append-subpod subpod))))
 
+(defun wolfram--insert-image (image)
+  "Inserts an image xml into the current buffer"
+  (insert (format "%s\n"
+		  (xml-get-attribute image 'src))))
+
 (defun wolfram--append-subpod (subpod)
   "Appends a subpod to the current buffer."
   (let ((plaintext (car (xml-get-children subpod 'plaintext)))
 	(image (car (xml-get-children subpod 'img))))
-    (insert
-     (concat
-      (when plaintext
-	(format "%s\n"
-		(car (last plaintext))))
-      ;; (when image
-      ;; 	(format "%s\n"
-      ;; 		(xml-get-attribute image 'src)))
-      "\n"))
-    ))
+    (when (and plaintext image)
+      (wolfram--insert-image image))
+    (when (and plaintext (not image))
+      (insert (format "%s\n" (car (last plaintext)))))
+    (when (and image (not plaintext))
+      (wolfram--insert-image image))
+    (insert "\n")))
 
 (defun wolfram--switch-to-wolfram-buffer ()
   "Switches to (creates if necessary) the wolfram alpha results buffer."
