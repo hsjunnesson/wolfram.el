@@ -125,12 +125,10 @@
 	(buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
-  
   (wolfram--create-wolfram-buffer query)
   (wolfram--async-xml-for-query
    query
    (lambda (args)
-     (print "foo")
      (let ((pods 
 	    (xml-get-children
 	     (let ((data (buffer-string)))
