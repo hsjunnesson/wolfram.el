@@ -24,21 +24,23 @@
 
 ;;; Vars:
 
-(defvar wolfram-app-id "2JTYAL-2XAYU3XVE3"
-  "The Wolfram Alpha App ID")
-
 (defvar wolfram-alpha-query-history nil
   "History for `wolfram-alpha' prompt.")
 
 (defgroup wolfram-alpha nil
   "Wolfram Alpha customization group")
 
+(defcustom wolfram-alpha-app-id ""
+  "The Wolfram Alpha App ID."
+  :group 'wolfram-alpha
+  :type 'string)
+
 (defcustom wolfram-alpha-buffer-name "*WolframAlpha*"
   "The name of the WolframAlpha query results buffer."
   :group 'wolfram-alpha
   :type 'string)
 
-(defcustom wolfram-alpha-prefer-plaintext t
+(defcustom wolfram-alpha-prefer-plaintext nil
   "Whether to show plaintext version when there's both a plaintext and an image result."
   :group 'wolfram-alpha
   :type 'boolean)
@@ -52,7 +54,7 @@
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
   (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext"
-	  wolfram-app-id
+	  wolfram-alpha-app-id
 	  query))
 
 (defun wolfram--xml-for-query (query)
