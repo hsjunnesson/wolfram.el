@@ -56,7 +56,6 @@
 (defun wolfram--async-xml-for-query (query callback)
   "Returns XML for a query"
   (let* ((url (wolfram--url-for-query query)))
-    (print url)
     (when url (with-current-buffer
 		  (url-retrieve url callback)))))
 
@@ -98,11 +97,11 @@
   (let ((plaintext (car (xml-get-children subpod 'plaintext)))
 	(image (car (xml-get-children subpod 'img))))
     (when (and plaintext image)
-      (wolfram--insert-image image))
+      (insert (format "%s\n" (xml-get-attribute image 'src))))
     (when (and plaintext (not image))
       (insert (format "%s\n" (car (last plaintext)))))
     (when (and image (not plaintext))
-      (wolfram--insert-image image))
+      (insert (format "%s\n" (xml-get-attribute image 'src))))
     (insert "\n")))
 
 (defun wolfram--switch-to-wolfram-buffer ()
