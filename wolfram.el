@@ -79,19 +79,19 @@
 
 (defun wolfram--insert-image (image)
   "Inserts an image xml into the current buffer"
-  (let ((url (xml-get-attribute image 'src)))
-    (url-retrieve
-     url
-     (lambda (status buffer insert-point url)
-       (switch-to-buffer buffer)
-       (let ((old-point (point)))
-	 (print (format "insert point %s current point %s" insert-point old-point))
-	 (goto-char insert-point)
-	 (insert (format "%s\n" url))
-	 (goto-char old-point))
-       )
-     (list (current-buffer) (point) url)
-     )))
+  (let* ((url (xml-get-attribute image 'src))
+	 (temp-file (make-temp-file "wolfram"))
+	 (data (url-retrieve-synchronously url))
+	 )
+    (switch-to-buffer data)
+    (goto-char (point-min))
+    (search-forward "\n\n")
+    (write-region (point-min) (point-max) temp-file)
+    (kill-buffer)
+    (wolfram--switch-to-wolfram-buffer)
+    (insert (format "%s" temp-file))
+    (goto-char (point-max))
+    ))
 
 (defun wolfram--append-subpod (subpod)
   "Appends a subpod to the current buffer."
