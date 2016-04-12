@@ -1,6 +1,6 @@
 ;;; wolfram.el --- Wolfram Alpha Integration
 
-;; Copyright (C) 2011  Hans Sjunnesson
+;; Copyright (C) 2011-2016  Hans Sjunnesson
 
 ;; Author: Hans Sjunnesson <hans.sjunnesson@gmail.com>
 ;; Keywords: math
@@ -35,10 +35,7 @@
   :group 'wolfram-alpha
   :type 'string)
 
-(defcustom wolfram-alpha-buffer-name "*WolframAlpha*"
-  "The name of the WolframAlpha query results buffer."
-  :group 'wolfram-alpha
-  :type 'string)
+(defvar wolfram-alpha-buffer-name "*WolframAlpha*")
 
 
 ;;; Code:
@@ -50,14 +47,14 @@
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
   (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15"
-	  wolfram-alpha-app-id
-	  (url-hexify-string query)))
+          wolfram-alpha-app-id
+          (url-hexify-string query)))
 
 (defun wolfram--async-xml-for-query (query callback)
   "Returns XML for a query"
   (let* ((url (wolfram--url-for-query query)))
     (when url (with-current-buffer
-		  (url-retrieve url callback)))))
+                  (url-retrieve url callback)))))
 
 (defun wolfram--pods-for-query (query)
   "Runs a query, return pods as an alist."
@@ -66,22 +63,21 @@
 (defun wolfram--append-pod (pod)
   "Appends a pod to the current buffer."
   (let ((title (xml-get-attribute pod 'title))
-  	(err (equal "true" (xml-get-attribute pod 'error))))
+        (err (equal "true" (xml-get-attribute pod 'error))))
     ;; First insert pod
     (insert
      (when title
        (format "** %s%s\n"
-	       title
-	       (if err " *error*" ""))))
+               title
+               (if err " *error*" ""))))
     ;; Then subpods
     (dolist (subpod (xml-get-children pod 'subpod)) (wolfram--append-subpod subpod))))
 
 (defun wolfram--insert-image (image)
   "Inserts an image xml into the current buffer"
   (let* ((url (xml-get-attribute image 'src))
-	 (temp-file (make-temp-file "wolfram"))
-	 (data (url-retrieve-synchronously url))
-	 )
+         (temp-file (make-temp-file "wolfram"))
+         (data (url-retrieve-synchronously url)))
     (switch-to-buffer data)
     (goto-char (point-min))
     (search-forward "\n\n")
@@ -95,13 +91,13 @@
 (defun wolfram--append-subpod (subpod)
   "Appends a subpod to the current buffer."
   (let ((plaintext (car (xml-get-children subpod 'plaintext)))
-	(image (car (xml-get-children subpod 'img))))
+        (image (car (xml-get-children subpod 'img))))
     (when (and plaintext image)
-      (insert (format "%s\n" (xml-get-attribute image 'src))))
+      (wolfram--insert-image-from-url (xml-get-attribute image 'src)))
     (when (and plaintext (not image))
       (insert (format "%s\n" (car (last plaintext)))))
     (when (and image (not plaintext))
-      (insert (format "%s\n" (xml-get-attribute image 'src))))
+      (wolfram--insert-image (xml-get-attribute image 'src)))
     (insert "\n")))
 
 (defun wolfram--switch-to-wolfram-buffer ()
@@ -128,12 +124,27 @@
   (dolist (pod pods)
     (wolfram--append-pod pod)))
 
+(defun wolfram--insert-image-from-url (url)
+  "Fetches an image and inserts it in the buffer."
+  (unless url (error "No URL."))
+  (let ((buffer (url-retrieve-synchronously url)))
+    (unwind-protect
+        (let ((data (with-current-buffer buffer
+                      (goto-char (point-min))
+                      (search-forward "\n\n")
+                      (buffer-substring (point) (point-max)))))
+          (insert-image (create-image data nil t)))
+      (kill-buffer buffer))))
+
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
+  (unless (and (bound-and-true-p wolfram-alpha-app-id)
+               (not (string= "" wolfram-alpha-app-id)))
+    (error "Custom variable wolfram-alpha-app-id not set."))
   (interactive
    (list
     (if (and transient-mark-mode mark-active)
-	(buffer-substring-no-properties
+        (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
   (wolfram--create-wolfram-buffer query)
@@ -141,17 +152,17 @@
    query
    (lambda (args)
      (let ((pods 
-	    (xml-get-children
-	     (let ((data (buffer-string)))
-	       (with-temp-buffer
-		 (erase-buffer)
-		 (insert data)
-		 (car (xml-parse-region (point-min) (point-max)))))
-	     'pod)))
+            (xml-get-children
+             (let ((data (buffer-string)))
+               (with-temp-buffer
+                 (erase-buffer)
+                 (insert data)
+                 (car (xml-parse-region (point-min) (point-max)))))
+             'pod)))
        (let ((buffer (wolfram--switch-to-wolfram-buffer)))
-	 (wolfram--append-pods-to-buffer
-	  buffer
-	  pods))
+         (wolfram--append-pods-to-buffer
+          buffer
+          pods))
        )
      ))
   )
