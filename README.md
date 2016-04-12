@@ -16,7 +16,7 @@ Create a new AppID. In Emacs set that AppID as the custom variable `wolfram-alph
 
 ## Usage
 
-To make a query run `M-x wolfram-alpha` then type your query. It will show the result in an org-mode buffer called `*WolframAlpha*`.
+To make a query, run `M-x wolfram-alpha` then type your query. It will show the result in an org-mode buffer called `*WolframAlpha*`.
 
 
 ## Examples
