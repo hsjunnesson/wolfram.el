@@ -18,8 +18,8 @@ To make a query run `M-x wolfram-alpha` then type your query. It will show the r
 
 *How much does Lake Victoria weigh?*
 
-[[https://s3.amazonaws.com/wolfram.el/query.png]]
+![How much does Lake Victoria weigh?](https://s3.amazonaws.com/wolfram.el/query.png)
 
 *How many nukes does the United State have?*
 
-[[https://s3.amazonaws.com/wolfram.el/plot.png]]
+![How many nukes does the United State have?](https://s3.amazonaws.com/wolfram.el/plot.png)
