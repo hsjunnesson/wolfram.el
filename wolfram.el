@@ -28,7 +28,8 @@
   "History for `wolfram-alpha' prompt.")
 
 (defgroup wolfram-alpha nil
-  "Wolfram Alpha customization group")
+  "Wolfram Alpha customization group"
+  :group 'wolfram)
 
 (defcustom wolfram-alpha-app-id ""
   "The Wolfram Alpha App ID."
