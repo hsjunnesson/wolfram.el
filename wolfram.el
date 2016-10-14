@@ -138,15 +138,15 @@
 
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
-  (unless (and (bound-and-true-p wolfram-alpha-app-id)
-               (not (string= "" wolfram-alpha-app-id)))
-    (error "Custom variable wolfram-alpha-app-id not set."))
   (interactive
    (list
     (if (and transient-mark-mode mark-active)
         (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
+  (unless (and (bound-and-true-p wolfram-alpha-app-id)
+               (not (string= "" wolfram-alpha-app-id)))
+    (error "Custom variable wolfram-alpha-app-id not set."))
   (wolfram--create-wolfram-buffer query)
   (wolfram--async-xml-for-query
    query
