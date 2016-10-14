@@ -136,6 +136,7 @@
           (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
+;;;###autoload
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
   (interactive
