@@ -142,7 +142,7 @@
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
   (interactive
    (list
-    (if (and transient-mark-mode mark-active)
+    (if (use-region-p)
         (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
