@@ -28,7 +28,8 @@
   "History for `wolfram-alpha' prompt.")
 
 (defgroup wolfram-alpha nil
-  "Wolfram Alpha customization group")
+  "Wolfram Alpha customization group"
+  :group 'wolfram)
 
 (defcustom wolfram-alpha-app-id ""
   "The Wolfram Alpha App ID."
@@ -58,7 +59,7 @@
 
 (defun wolfram--pods-for-query (query)
   "Runs a query, return pods as an alist."
-  (xml-get-children (wolfram--xml-for-query query) 'pod))
+  (xml-get-children (wolfram--async-xml-for-query query) 'pod))
 
 (defun wolfram--append-pod (pod)
   "Appends a pod to the current buffer."
@@ -136,17 +137,18 @@
           (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
+;;;###autoload
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
-  (unless (and (bound-and-true-p wolfram-alpha-app-id)
-               (not (string= "" wolfram-alpha-app-id)))
-    (error "Custom variable wolfram-alpha-app-id not set."))
   (interactive
    (list
-    (if (and transient-mark-mode mark-active)
+    (if (use-region-p)
         (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
+  (unless (and (bound-and-true-p wolfram-alpha-app-id)
+               (not (string= "" wolfram-alpha-app-id)))
+    (error "Custom variable wolfram-alpha-app-id not set."))
   (wolfram--create-wolfram-buffer query)
   (wolfram--async-xml-for-query
    query
