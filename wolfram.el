@@ -57,10 +57,6 @@
     (when url (with-current-buffer
                   (url-retrieve url callback)))))
 
-(defun wolfram--pods-for-query (query)
-  "Runs a query, return pods as an alist."
-  (xml-get-children (wolfram--async-xml-for-query query) 'pod))
-
 (defun wolfram--append-pod (pod)
   "Appends a pod to the current buffer."
   (let ((title (xml-get-attribute pod 'title))
