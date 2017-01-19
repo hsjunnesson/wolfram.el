@@ -138,13 +138,21 @@
     (insert (format "# \"%s\" (searching)\n"
                     (propertize query 'face 'wolfram-query)))))
 
-(defun wolfram--append-pods-to-buffer (buffer pods)
-  "Appends all of the pods to a specific buffer."
+(defun wolfram--delete-in-progress-notification ()
+  "Switch to WolframAlpha buffer and delete the \"(searching)\" notification.
+That notification indicates that the search is still in progress. This function
+removes that notification."
+  (wolfram--switch-to-wolfram-buffer)
+  (goto-char (point-max))
+  (search-backward " (searching)")
   (let ((inhibit-read-only t))
-    (goto-char (point-max))
-    (search-backward " (searching)")
-    (replace-match "")
-    (goto-char (point-max))
+    (replace-match ""))
+  (goto-char (point-max)))
+
+(defun wolfram--append-pods-to-buffer (pods)
+  "Appends all pods from PODS to WolframAlpha buffer."
+  (wolfram--delete-in-progress-notification)
+  (let ((inhibit-read-only t))
     (dolist (pod pods)
       (wolfram--append-pod pod))
     (insert "\n")))
@@ -161,6 +169,23 @@
           (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
+(defun wolfram--query-callback (_args)
+  "Callback function to run after XML is returned for a query."
+  (let* ((data (buffer-string))
+         (pods (xml-get-children
+                (with-temp-buffer
+                  (erase-buffer)
+                  (insert data)
+                  (car (xml-parse-region (point-min) (point-max))))
+                'pod)))
+    (if pods                         ;If at least 1 result pod was returned
+        (wolfram--append-pods-to-buffer pods)
+      (wolfram--delete-in-progress-notification)
+      (let ((inhibit-read-only t))
+        (insert (propertize "No results for your query.\n\n"
+                            'face 'warning))))
+    (message "")))                      ;Remove the "Contacting host:.." message
+
 ;;;###autoload
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
@@ -172,26 +197,9 @@
       (read-string "Query: " nil 'wolfram-alpha-history))))
   (unless (and (bound-and-true-p wolfram-alpha-app-id)
                (not (string= "" wolfram-alpha-app-id)))
-    (error "Custom variable wolfram-alpha-app-id not set."))
+    (error "Custom variable `wolfram-alpha-app-id' not set."))
   (wolfram--create-wolfram-buffer query)
-  (wolfram--async-xml-for-query
-   query
-   (lambda (args)
-     (let ((pods 
-            (xml-get-children
-             (let ((data (buffer-string)))
-               (with-temp-buffer
-                 (erase-buffer)
-                 (insert data)
-                 (car (xml-parse-region (point-min) (point-max)))))
-             'pod)))
-       (let ((buffer (wolfram--switch-to-wolfram-buffer)))
-         (wolfram--append-pods-to-buffer
-          buffer
-          pods))
-       )
-     ))
-  )
+  (wolfram--async-xml-for-query query #'wolfram--query-callback))
 
 (provide 'wolfram)
 ;;; wolfram.el ends here
