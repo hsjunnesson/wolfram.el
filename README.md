@@ -4,7 +4,7 @@ Allows you to query Wolfram Alpha from within Emacs.
 
 ## Installation
 
-Download `wolfram.el` to a directory in your `load-path`. Then add this to your init file:
+Install package `wolfram` from MELPA or download `wolfram.el` to a directory in your `load-path`. Then add this to your init file:
 
 ```
 (require 'wolfram)
@@ -16,7 +16,7 @@ Create a new AppID. In Emacs set that AppID as the custom variable `wolfram-alph
 
 ## Usage
 
-To make a query, run `M-x wolfram-alpha` then type your query. It will show the result in an org-mode buffer called `*WolframAlpha*`.
+To make a query, run `M-x wolfram-alpha` then type your query. It will show the result in a buffer called `*WolframAlpha*`.
 
 
 ## Examples

@@ -1,9 +1,10 @@
 ;;; wolfram.el --- Wolfram Alpha Integration
 
-;; Copyright (C) 2011-2016  Hans Sjunnesson
+;; Copyright (C) 2011-2017  Hans Sjunnesson
 
 ;; Author: Hans Sjunnesson <hans.sjunnesson@gmail.com>
 ;; Keywords: math
+;; Version: 1.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -64,7 +65,7 @@
     ;; First insert pod
     (insert
      (when title
-       (format "** %s%s\n"
+       (format "\n## %s%s\n\n"
                title
                (if err " *error*" ""))))
     ;; Then subpods
@@ -102,7 +103,7 @@
   (let ((buffer (get-buffer-create wolfram-alpha-buffer-name)))
     (unless (eq (current-buffer) buffer)
       (switch-to-buffer buffer))
-    (when (functionp 'org-mode) (org-mode))
+    (special-mode)
     (when (functionp 'iimage-mode) (iimage-mode))
     buffer))
 
@@ -110,16 +111,19 @@
   "Creates the buffer to show the pods."
   (wolfram--switch-to-wolfram-buffer)
   (goto-char (point-max))
-  (insert (format "* \"%s\" (searching)\n" query)))
+  (let ((inhibit-read-only t))
+    (insert (format "# \"%s\" (searching)\n" query))))
 
 (defun wolfram--append-pods-to-buffer (buffer pods)
   "Appends all of the pods to a specific buffer."
-  (goto-char (point-max))
-  (search-backward " (searching)")
-  (replace-match "")
-  (goto-char (point-max))
-  (dolist (pod pods)
-    (wolfram--append-pod pod)))
+  (let ((inhibit-read-only t))
+    (goto-char (point-max))
+    (search-backward " (searching)")
+    (replace-match "")
+    (goto-char (point-max))
+    (dolist (pod pods)
+      (wolfram--append-pod pod))
+    (insert "\n")))
 
 (defun wolfram--insert-image-from-url (url)
   "Fetches an image and inserts it in the buffer."
