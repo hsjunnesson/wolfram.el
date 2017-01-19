@@ -21,12 +21,28 @@
 
 ;;; Commentary:
 
-;; 
+;; This package allows you to query Wolfram Alpha from within Emacs.
+
+;; It is required to get a WolframAlpha Developer AppID in order to use this
+;; package.
+;;  - Create an account at https://developer.wolframalpha.com/portal/signin.html.
+;;  - Once you sign in with the Wolfram ID at
+;;    https://developer.wolframalpha.com/portal/myapps/, click on "Get an AppID"
+;;    to get your Wolfram API or AppID.
+;;  - Follow the steps where you put in your app name and description, and
+;;    you will end up with an AppID that looks like "ABCDEF-GHIJKLMNOP",
+;;    where few of those characters could be numbers too.
+;;  - Set the custom variable `wolfram-alpha-app-id' to that AppID.
+
+;; To make a query, run `M-x wolfram-alpha' then type your query. It will show
+;; the results in a buffer called `*WolframAlpha*'.
+
+(require 'url)
+(require 'xml)
+(require 'url-cache)
+(require 'org-faces)                    ;For `org-level-1' and `org-level-2' faces
 
 ;;; Vars:
-
-(defvar wolfram-alpha-query-history nil
-  "History for `wolfram-alpha' prompt.")
 
 (defgroup wolfram-alpha nil
   "Wolfram Alpha customization group"
@@ -37,14 +53,21 @@
   :group 'wolfram-alpha
   :type 'string)
 
-(defvar wolfram-alpha-buffer-name "*WolframAlpha*")
+(defface wolfram-query
+  '((t (:inherit org-level-1)))
+  "Face for the query string in the WolframAlpha buffer.")
 
+(defface wolfram-pod-title
+  '((t (:inherit org-level-2)))
+  "Face for the pod titles in search results in the WolframAlpha buffer.")
+
+(defvar wolfram-alpha-buffer-name "*WolframAlpha*"
+  "Name of WolframAlpha search buffer. ")
+
+(defvar wolfram-alpha-query-history nil
+  "History for `wolfram-alpha' prompt.")
 
 ;;; Code:
-
-(require 'url)
-(require 'xml)
-(require 'url-cache)
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
@@ -66,7 +89,7 @@
     (insert
      (when title
        (format "\n## %s%s\n\n"
-               title
+               (propertize title 'face 'wolfram-pod-title)
                (if err " *error*" ""))))
     ;; Then subpods
     (dolist (subpod (xml-get-children pod 'subpod)) (wolfram--append-subpod subpod))))
@@ -112,7 +135,8 @@
   (wolfram--switch-to-wolfram-buffer)
   (goto-char (point-max))
   (let ((inhibit-read-only t))
-    (insert (format "# \"%s\" (searching)\n" query))))
+    (insert (format "# \"%s\" (searching)\n"
+                    (propertize query 'face 'wolfram-query)))))
 
 (defun wolfram--append-pods-to-buffer (buffer pods)
   "Appends all of the pods to a specific buffer."
