@@ -1,3 +1,5 @@
+[![MELPA](http://melpa.org/packages/wolfram-badge.svg)](http://melpa.org/#/wolfram)
+
 # Wolfram Alpha integration in Emacs
 
 Allows you to query Wolfram Alpha from within Emacs.
