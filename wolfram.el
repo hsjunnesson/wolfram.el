@@ -67,9 +67,11 @@
 (defvar wolfram-alpha-query-history nil
   "History for `wolfram-alpha' prompt.")
 
-(defvar wolfram-alpha-magnification-factor 1.0
+(defcustom wolfram-alpha-magnification-factor 1.0
   "Set the magnification factor.
-See https://products.wolframalpha.com/api/documentation/#width-mag")
+See https://products.wolframalpha.com/api/documentation/#width-mag"
+  :group 'wolfram-alpha
+  :type 'number)
 
 ;;; Code:
 
