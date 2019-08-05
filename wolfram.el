@@ -1,6 +1,6 @@
 ;;; wolfram.el --- Wolfram Alpha Integration
 
-;; Copyright (C) 2011-2017  Hans Sjunnesson
+;; Copyright (C) 2011-2019  Hans Sjunnesson
 
 ;; Author: Hans Sjunnesson <hans.sjunnesson@gmail.com>
 ;; Keywords: math
