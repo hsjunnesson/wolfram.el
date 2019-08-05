@@ -67,13 +67,20 @@
 (defvar wolfram-alpha-query-history nil
   "History for `wolfram-alpha' prompt.")
 
+(defcustom wolfram-alpha-magnification-factor 1.0
+  "Set the magnification factor.
+See https://products.wolframalpha.com/api/documentation/#width-mag"
+  :group 'wolfram-alpha
+  :type 'number)
+
 ;;; Code:
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
-  (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15"
+  (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15&mag=%s"
           wolfram-alpha-app-id
-          (url-hexify-string query)))
+          (url-hexify-string query)
+          wolfram-alpha-magnification-factor))
 
 (defun wolfram--async-xml-for-query (query callback)
   "Returns XML for a query"
