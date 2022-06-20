@@ -142,7 +142,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   (wolfram--switch-to-wolfram-buffer)
   (goto-char (point-max))
   (let ((inhibit-read-only t))
-    (insert (format "# \"%s\" (searching)\n"
+    (insert (format "\n# \"%s\" (searching)\n"
                     (propertize query 'face 'wolfram-query)))))
 
 (defun wolfram--delete-in-progress-notification ()
