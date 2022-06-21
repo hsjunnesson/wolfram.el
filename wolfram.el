@@ -191,6 +191,9 @@ removes that notification."
       (let ((inhibit-read-only t))
         (insert (propertize "No results for your query.\n\n"
                             'face 'warning))))
+    (when (fboundp 'make-separator-line) ; Emacs >= 28.1
+      (let ((inhibit-read-only t))
+        (insert (make-separator-line))))
     (message "")))                      ;Remove the "Contacting host:.." message
 
 ;;;###autoload
