@@ -77,7 +77,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
-  (format "http://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15&mag=%s"
+  (format "https://api.wolframalpha.com/v2/query?appid=%s&input=%s&format=image,plaintext&parsetimeout=15&scantimeout=15&podtimeout=15&formattimeout=15&mag=%s"
           wolfram-alpha-app-id
           (url-hexify-string query)
           wolfram-alpha-magnification-factor))
