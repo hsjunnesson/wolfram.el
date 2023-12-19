@@ -142,7 +142,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   (wolfram--switch-to-wolfram-buffer)
   (goto-char (point-max))
   (let ((inhibit-read-only t))
-    (insert (format "\n# \"%s\" (searching)\n"
+    (insert (format "\n# \"%s\" (searching)\n"
                     (propertize query 'face 'wolfram-query)))))
 
 (defun wolfram--delete-in-progress-notification ()
@@ -210,6 +210,33 @@ removes that notification."
     (error "Custom variable `wolfram-alpha-app-id' not set."))
   (wolfram--create-wolfram-buffer query)
   (wolfram--async-xml-for-query query #'wolfram--query-callback))
+
+(defun wolfram--get-headings ()
+  "Get a list of all headings in the current WolframAlpha buffer."
+  (let ((headings '()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (search-forward-regexp "^## \\(.*\\)" nil t)
+        (push (match-string-no-properties 1) headings)))
+    (nreverse headings)))
+
+(defun wolfram--go-to-heading (heading)
+  "Go to the specified heading in the current buffer."
+  (goto-char (point-min))
+  (search-forward-regexp (concat "^## " (regexp-quote heading)) nil t))
+
+;;;###autoload
+(defun wolfram-alpha-navigate-to-category ()
+  "Display a navigable menu of all categories (headings) in the current WolframAlpha buffer."
+  (interactive)
+  (unless (string= (buffer-name) wolfram-alpha-buffer-name)
+    (error "Not in a WolframAlpha buffer"))
+  (let* ((headings (wolfram--get-headings))
+         (choice (completing-read "Go to category: " headings nil t)))
+    (wolfram--go-to-heading choice)))
+
+;; Add a keybinding to call `wolfram-alpha-navigate-to-category` easily
+(define-key special-mode-map (kbd "C-c C-j") 'wolfram-alpha-navigate-to-category)
 
 (provide 'wolfram)
 ;;; wolfram.el ends here
