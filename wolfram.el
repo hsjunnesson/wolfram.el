@@ -226,6 +226,11 @@ removes that notification."
         (insert (make-separator-line))))
     (message "")))                      ;Remove the "Contacting host:.." message
 
+(defun wolfram--check-imagemagick ()
+  "Check if ImageMagick's `convert` utility is available."
+  (unless (executable-find "convert")
+    (error "The ImageMagick convert utility is not available. Please install ImageMagick.")))
+
 ;;;###autoload
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
@@ -235,6 +240,7 @@ removes that notification."
         (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
+  (wolfram--check-imagemagick)
   (unless (and (bound-and-true-p wolfram-alpha-app-id)
                (not (string= "" wolfram-alpha-app-id)))
     (error "Custom variable `wolfram-alpha-app-id' not set."))
