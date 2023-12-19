@@ -48,5 +48,5 @@ To make a query, run `M-x wolfram-alpha` then type your query. It will show the 
 
 ![How many nukes does the United State have?](https://s3.amazonaws.com/wolfram.el/plot.png)
 
-*Weather in Paris (dark-mode enabled)*
-
+*Weather in Mombasa (dark-mode enabled)*
+![Weather in Mombasa](https://i.ibb.co/tB9sNGy/image.png)
