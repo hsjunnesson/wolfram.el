@@ -227,9 +227,13 @@ removes that notification."
     (message "")))                      ;Remove the "Contacting host:.." message
 
 (defun wolfram--check-imagemagick ()
-  "Check if ImageMagick's `convert` utility is available."
-  (unless (executable-find "convert")
-    (error "The ImageMagick convert utility is not available. Please install ImageMagick.")))
+  "Check if ImageMagick's `convert` utility is available for dark mode."
+  (when wolfram-use-dark-version
+    (unless (executable-find "convert")
+      (display-warning 'wolfram
+                       "The ImageMagick convert utility is not available. \
+                        Dark mode images require ImageMagick. Please install it for full functionality."
+                       :warning))))
 
 ;;;###autoload
 (defun wolfram-alpha (query)
