@@ -164,8 +164,19 @@ removes that notification."
       (wolfram--append-pod pod))
     (insert "\n")))
 
+(defvar wolfram-use-dark-version nil
+  "If non-nil, use the dark version of image insert.")
+
+;; Function that chooses the appropriate insertion function
 (defun wolfram--insert-image-from-url (url)
-  "Fetches an image and inserts it in the buffer."
+  (if wolfram-use-dark-version
+      (wolfram--insert-image-from-url-dark url)
+    (wolfram--insert-image-from-url-light url)))
+
+;; Light version of the image insertion function
+(defun wolfram--insert-image-from-url-light (url)
+  ;; No changes required, this is your default function
+  "Fetches an image and inserts it in the buffer (light version)."
   (unless url (error "No URL."))
   (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
@@ -174,6 +185,25 @@ removes that notification."
                       (search-forward "\n\n")
                       (buffer-substring (point) (point-max)))))
           (insert-image (create-image data nil t)))
+      (kill-buffer buffer))))
+
+(defun wolfram--insert-image-from-url-dark (url)
+  "Fetches an image and inserts it in the buffer. (dark version)"
+  (unless url (error "No URL."))
+  (let* ((buffer (url-retrieve-synchronously url))
+         (temp-file (make-temp-file "wolfram" nil ".png"))
+         (data-start (with-current-buffer buffer
+                       (goto-char (point-min))
+                       (search-forward "\n\n")
+                       (point))))
+    (unwind-protect
+        (progn
+          (with-current-buffer buffer
+            (write-region data-start (point-max) temp-file nil 'silent))
+          (shell-command (format "convert %s -negate %s" temp-file temp-file))
+          (if (file-exists-p temp-file)
+              (insert-image (create-image temp-file))
+            (error "Image file `%s' not found." temp-file)))
       (kill-buffer buffer))))
 
 (defun wolfram--query-callback (_args)
