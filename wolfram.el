@@ -38,6 +38,7 @@
 ;; the results in a buffer called `*WolframAlpha*'.
 
 (require 'url)
+(provide 'wolfram-custom-mode)
 (require 'xml)
 (require 'url-cache)
 (require 'org-faces)                    ;For `org-level-1' and `org-level-2' faces
@@ -74,6 +75,9 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   :type 'number)
 
 ;;; Code:
+
+(define-derived-mode wolfram-alpha-mode special-mode "WolframAlpha"
+  "Major mode for WolframAlpha result buffers.")
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
@@ -133,7 +137,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   (let ((buffer (get-buffer-create wolfram-alpha-buffer-name)))
     (unless (eq (current-buffer) buffer)
       (switch-to-buffer buffer))
-    (special-mode)
+    (wolfram-alpha-mode)
     (when (functionp 'iimage-mode) (iimage-mode))
     buffer))
 
@@ -276,7 +280,7 @@ removes that notification."
     (wolfram--go-to-heading choice)))
 
 ;; Add a keybinding to call `wolfram-alpha-navigate-to-category` easily
-(define-key special-mode-map (kbd "C-c C-j") 'wolfram-alpha-navigate-to-category)
+(define-key wolfram-alpha-mode-map (kbd "C-c C-j") 'wolfram-alpha-navigate-to-category)
 
 (provide 'wolfram)
 ;;; wolfram.el ends here
