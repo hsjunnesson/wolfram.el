@@ -279,7 +279,7 @@ removes that notification."
          (choice (completing-read "Go to category: " headings nil t)))
     (wolfram--go-to-heading choice)))
 
-;; Add a keybinding to call `wolfram-alpha-navigate-to-category` easily
+;; Add keybindings
 (define-key wolfram-alpha-mode-map (kbd "C-c C-j") 'wolfram-alpha-navigate-to-category)
 
 (provide 'wolfram)
