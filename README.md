@@ -14,18 +14,18 @@ Install package `wolfram` from MELPA or download `wolfram.el` to a directory in 
 
 # Variables 
 
-### Wolfram Alpha App ID
+## Wolfram Alpha App ID
 Create an account at [wolframalpha.com](http://www.wolframalpha.com), then in your account select "My Apps (API)".
 Create a new AppID. In Emacs set that AppID as the custom variable `wolfram-alpha-app-id`.
 
-### Optional Dark Mode
+## Optional Dark Mode
 Enable dark mode by setting `wolfram-use-dark-version` to `t` in your configuration file. Dark mode requires ImageMagick's `convert` utility to invert images for a dark theme. Without ImageMagick installed, image inversion will not function, and a warning will be displayed if dark mode is enabled.
 
 ```el
 (setq wolfram-use-dark-version t)
 ```
 
-### Magnification Factor
+## Magnification Factor
 Adjust the magnification factor for images in query results using the custom variable `wolfram-alpha-magnification-factor`. A higher value results in larger images.
 
 ```el
