@@ -38,6 +38,7 @@
 ;; the results in a buffer called `*WolframAlpha*'.
 
 (require 'url)
+(provide 'wolfram-custom-mode)
 (require 'xml)
 (require 'url-cache)
 (require 'org-faces)                    ;For `org-level-1' and `org-level-2' faces
@@ -74,6 +75,9 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   :type 'number)
 
 ;;; Code:
+
+(define-derived-mode wolfram-alpha-mode special-mode "WolframAlpha"
+  "Major mode for WolframAlpha result buffers.")
 
 (defun wolfram--url-for-query (query)
   "Formats a WolframAlpha API url."
@@ -133,7 +137,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   (let ((buffer (get-buffer-create wolfram-alpha-buffer-name)))
     (unless (eq (current-buffer) buffer)
       (switch-to-buffer buffer))
-    (special-mode)
+    (wolfram-alpha-mode)
     (when (functionp 'iimage-mode) (iimage-mode))
     buffer))
 
@@ -142,7 +146,7 @@ See https://products.wolframalpha.com/api/documentation/#width-mag"
   (wolfram--switch-to-wolfram-buffer)
   (goto-char (point-max))
   (let ((inhibit-read-only t))
-    (insert (format "\n# \"%s\" (searching)\n"
+    (insert (format "\n# \"%s\" (searching)\n"
                     (propertize query 'face 'wolfram-query)))))
 
 (defun wolfram--delete-in-progress-notification ()
@@ -164,8 +168,19 @@ removes that notification."
       (wolfram--append-pod pod))
     (insert "\n")))
 
+(defvar wolfram-use-dark-version nil
+  "If non-nil, use the dark version of image insert.")
+
+;; Function that chooses the appropriate insertion function
 (defun wolfram--insert-image-from-url (url)
-  "Fetches an image and inserts it in the buffer."
+  (if wolfram-use-dark-version
+      (wolfram--insert-image-from-url-dark url)
+    (wolfram--insert-image-from-url-light url)))
+
+;; Light version of the image insertion function
+(defun wolfram--insert-image-from-url-light (url)
+  ;; No changes required, this is your default function
+  "Fetches an image and inserts it in the buffer (light version)."
   (unless url (error "No URL."))
   (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
@@ -174,6 +189,25 @@ removes that notification."
                       (search-forward "\n\n")
                       (buffer-substring (point) (point-max)))))
           (insert-image (create-image data nil t)))
+      (kill-buffer buffer))))
+
+(defun wolfram--insert-image-from-url-dark (url)
+  "Fetches an image and inserts it in the buffer. (dark version)"
+  (unless url (error "No URL."))
+  (let* ((buffer (url-retrieve-synchronously url))
+         (temp-file (make-temp-file "wolfram" nil ".png"))
+         (data-start (with-current-buffer buffer
+                       (goto-char (point-min))
+                       (search-forward "\n\n")
+                       (point))))
+    (unwind-protect
+        (progn
+          (with-current-buffer buffer
+            (write-region data-start (point-max) temp-file nil 'silent))
+          (shell-command (format "convert %s -negate %s" temp-file temp-file))
+          (if (file-exists-p temp-file)
+              (insert-image (create-image temp-file))
+            (error "Image file `%s' not found." temp-file)))
       (kill-buffer buffer))))
 
 (defun wolfram--query-callback (_args)
@@ -196,6 +230,15 @@ removes that notification."
         (insert (make-separator-line))))
     (message "")))                      ;Remove the "Contacting host:.." message
 
+(defun wolfram--check-imagemagick ()
+  "Check if ImageMagick's `convert` utility is available for dark mode."
+  (when wolfram-use-dark-version
+    (unless (executable-find "convert")
+      (display-warning 'wolfram
+                       "The ImageMagick convert utility is not available. \
+                        Dark mode images require ImageMagick. Please install it for full functionality."
+                       :warning))))
+
 ;;;###autoload
 (defun wolfram-alpha (query)
   "Sends a query to Wolfram Alpha, returns the resulting data as a list of pods."
@@ -205,11 +248,39 @@ removes that notification."
         (buffer-substring-no-properties
          (region-beginning) (region-end))
       (read-string "Query: " nil 'wolfram-alpha-history))))
+  (wolfram--check-imagemagick)
   (unless (and (bound-and-true-p wolfram-alpha-app-id)
                (not (string= "" wolfram-alpha-app-id)))
     (error "Custom variable `wolfram-alpha-app-id' not set."))
   (wolfram--create-wolfram-buffer query)
   (wolfram--async-xml-for-query query #'wolfram--query-callback))
+
+(defun wolfram--get-headings ()
+  "Get a list of all headings in the current WolframAlpha buffer."
+  (let ((headings '()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (search-forward-regexp "^## \\(.*\\)" nil t)
+        (push (match-string-no-properties 1) headings)))
+    (nreverse headings)))
+
+(defun wolfram--go-to-heading (heading)
+  "Go to the specified heading in the current buffer."
+  (goto-char (point-min))
+  (search-forward-regexp (concat "^## " (regexp-quote heading)) nil t))
+
+;;;###autoload
+(defun wolfram-alpha-navigate-to-category ()
+  "Display a navigable menu of all categories (headings) in the current WolframAlpha buffer."
+  (interactive)
+  (unless (string= (buffer-name) wolfram-alpha-buffer-name)
+    (error "Not in a WolframAlpha buffer"))
+  (let* ((headings (wolfram--get-headings))
+         (choice (completing-read "Go to category: " headings nil t)))
+    (wolfram--go-to-heading choice)))
+
+;; Add keybindings
+(define-key wolfram-alpha-mode-map (kbd "C-c C-j") 'wolfram-alpha-navigate-to-category)
 
 (provide 'wolfram)
 ;;; wolfram.el ends here
